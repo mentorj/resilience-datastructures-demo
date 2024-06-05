@@ -4,10 +4,14 @@ import com.foo.service.impl.SimpleServiceRandomizedImpl;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.vavr.control.Try;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.*;
@@ -67,5 +71,41 @@ public class ResilienceTest {
             Try<String> result = Try.ofSupplier(simpleServiceWithCBSupplier);
         }
         assertThat(circuitsOpened.get()).isEqualTo(true);
+    }
+
+
+    @Test
+    void ensureRateLimiterProtectResource(){
+        // AtomicBoolean used to toggle status
+        AtomicBoolean status = new AtomicBoolean(true);
+        // create the resource protected as a supplier object
+        Supplier<String> simpleServiceSupplier = () -> "Hello";
+
+        // create rate limiter config
+        RateLimiterConfig config = RateLimiterConfig.custom()
+                .limitRefreshPeriod(Duration.ofSeconds(1))
+                .limitForPeriod(1000)
+                .timeoutDuration(Duration.ofMillis(250))
+                .build();
+
+// Create registry
+        RateLimiterRegistry rateLimiterRegistry = RateLimiterRegistry.of(config);
+        RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("myLimiter",config);
+        rateLimiter.getEventPublisher().onFailure(event -> {
+            System.out.println("Rate Limiter error received");
+            status.set(false);
+        });
+        Supplier<String> protectedResource = RateLimiter.decorateSupplier(rateLimiter, simpleServiceSupplier);
+
+
+        for(int i =0;i < 10000;i++){
+            Try<String> result = Try.of(() -> protectedResource.get());
+            result.map(s -> s).onFailure(throwable -> {
+                System.out.println("Unable to reach service..."+  throwable.getMessage());
+            });
+        }
+
+        assertThat(status.get()).isFalse();
+
     }
 }
