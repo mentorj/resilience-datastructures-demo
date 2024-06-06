@@ -17,14 +17,7 @@ import static org.assertj.core.api.Assertions.*;
  * @author deadbrain - jerome@javaxpert.com
  */
 public class FlatmappingTest {
-    private Condition<java.util.List> sizeIsEqualTo2 = VerboseCondition.verboseCondition(actual -> actual.size() == 2,
-            // predicate description
-            "not equal to 2",
-            // value under test description transformation function
-            s -> String.format(" but length was %s", s.size()));
-
-
-    private Condition<List> sizeIsEqualTo2VavrList = VerboseCondition.verboseCondition(actual -> actual.size() == 2,
+    private final Condition<java.util.List> sizeIsEqualTo2 = VerboseCondition.verboseCondition(actual -> actual.size() == 2,
             // predicate description
             "not equal to 2",
             // value under test description transformation function
@@ -32,8 +25,10 @@ public class FlatmappingTest {
 
     @Test
     /**
+     * <p>
      * flatmap will flatten the list of options to a List of strings for any element non empty from
      * the initial collection
+     * </p>
      */
     void flatMappingOptions(){
         List<Option<String>> optionList = List.of(Option.some("Hello"),Option.some(" "),Option.none(),Option.some("World"));
@@ -58,8 +53,10 @@ public class FlatmappingTest {
 
     @Test
     /**
+     * <p>
      * shows how to apply flatmap with standard Java collections
      * also adds an example of quite advanced usage of AssertJ Condition
+     * </p>
      */
     void flatmapJavaStdCollections(){
         java.util.List<Optional<String>> javaStdOptionals = java.util.List.of(Optional.of("Hello "),Optional.empty(),Optional.of("World"),Optional.empty());
@@ -80,5 +77,33 @@ public class FlatmappingTest {
         List<Integer> flattenedList = eithers.flatMap(integers -> integers);
         int sum = flattenedList.foldLeft(0,(integer, integer2) -> integer+integer2);
         assertThat(sum).isEqualTo(54);
+    }
+
+    @Test
+    /**
+     * <p>
+     * show how flatmap flattens multi level structures
+     * flatmap makes all the stuff  for us...magic!!
+     * </p>
+     */
+    void flatMapMultipleLevels(){
+        List<List<String>> twoLevelsList = List.of( List.of("a","b","c"),List.of("d","e","f"),List.of("g","h"),List.of("i","j"));
+        List<String> stdList = twoLevelsList.flatMap(strings -> strings);
+        String concatedString  = stdList.foldLeft("",(s, s2) -> s+s2);
+        assertThat(concatedString).isEqualTo("abcdefghij");
+        assertThat(concatedString).hasSize(10);
+    }
+
+    @Test
+    /**
+     * <p>
+     *     same example  with map() nmore work required foldLeft to transform from List<String> to  a single String
+     * </p>
+     */
+    void mapMultipleLevels(){
+        List<List<String>> twoLevelsList = List.of( List.of("a","b","c"),List.of("d","e","f"),List.of("g","h"),List.of("i","j"));
+        List<String> stdList = twoLevelsList.map(strings -> strings.foldLeft("",(s, s2) -> s+s2));
+        assertThat(stdList).hasSize(4);
+        assertThat(stdList).contains("abc");
     }
 }
