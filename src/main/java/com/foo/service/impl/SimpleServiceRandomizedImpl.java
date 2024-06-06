@@ -19,12 +19,12 @@ public class SimpleServiceRandomizedImpl implements SimpleService {
     }
 
     @Override
-    public String sayHello(String who) {
+    public String sayHello() {
         System.out.println("sayHello invoked");
         int randomValue = random.nextInt(100);
         if(randomValue<35)
             throw new RuntimeException("Impl failed");
         else
-            return "Hello " + who;
+            return "Hello World!";
     }
 }
