@@ -18,6 +18,18 @@ public class OptionTest {
         assertThat(myStringOption.isDefined()).isTrue();
         assertThat(myStringOption.get()).isEqualTo("world");
     }
+    @Test
+    void handlingNoneOption(){
+        Option<String> myStringOption = Option.none();
+        assertThat(myStringOption.isDefined()).isFalse();
+
+        String myStringMapped = myStringOption.peek(System.out::println)
+                .map(s -> s.toUpperCase())
+                .getOrElse("Broken");
+
+        assertThat(myStringMapped).isEqualTo("Broken");
+    }
+
 
     @Test
     void showCasingOptionHandling(){
