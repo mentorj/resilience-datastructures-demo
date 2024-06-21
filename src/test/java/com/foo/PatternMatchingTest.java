@@ -1,6 +1,7 @@
 package com.foo;
 
 import io.vavr.API;
+import io.vavr.Function1;
 import io.vavr.MatchError;
 import io.vavr.Predicates;
 import io.vavr.control.Option;
@@ -160,6 +161,29 @@ public class PatternMatchingTest {
     }
 
     @Test
+    void reusingSamePatternMatching(){
+        Function1<Address,String> matchAddressFn = address ->
+        {
+            return Match(address).of(
+                    Case($Address($("France"),$("Paris") ) ,
+                            "a guy from Paris"),
+                    Case($Address($("France"),$()) , "a french guy"),
+                    Case($(),"a foreigner")
+            );
+        };
+        Address adr1 = new Address();
+        adr1.setCountry("France");
+        adr1.setTown("Bordeaux");
+
+        Address adr2 = new Address();
+        adr2.setTown("Paris");
+        adr2.setCountry("France");
+
+        assertThat(matchAddressFn.apply(adr1)).isEqualTo("a french guy");
+        assertThat(matchAddressFn.apply(adr2)).isEqualTo("a guy from Paris");
+    }
+
+    @Test
     void whenInputDoesNotMatchAndNoDefaultClauseErrorIsRaised(){
         int i = -10;
         Assertions.assertThrows(MatchError.class,()-> {
@@ -173,6 +197,8 @@ public class PatternMatchingTest {
         });
 
     }
+
+
 
 
 }

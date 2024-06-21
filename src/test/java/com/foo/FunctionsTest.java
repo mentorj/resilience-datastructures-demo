@@ -1,9 +1,7 @@
 package com.foo;
 
-import io.vavr.Function0;
-import io.vavr.Function1;
-import io.vavr.Function2;
-import io.vavr.Function3;
+import io.vavr.*;
+import io.vavr.collection.List;
 import io.vavr.control.Option;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +67,13 @@ public class FunctionsTest {
     }
 
     @Test
+    void wrapDangerousFunctionsWithCheckedFunction(){
+        CheckedFunction2<Integer,Integer,Integer> dangerousFn = (x,y) -> {return x/y;};
+        Integer result = dangerousFn.unchecked().apply(4,2);
+        assertThat(result).isEqualTo(2);
+    }
+
+    @Test
     void runCurriedFunction(){
         Function3<Integer,Integer,Integer,Integer> addFn = (i, j, k) -> i+j+k;
         Function1<Integer,Function1<Integer,Function1<Integer,Integer>>> curruedAddFn = addFn.curried();
@@ -97,6 +102,17 @@ public class FunctionsTest {
         assertThat(okOption.isDefined()).isTrue();
         assertThat(okOption.get()).isEqualTo(2);
         assertThat(koOption.isDefined()).isFalse();
+
     }
 
+    @Test
+    void liftAndTransformationsWorkflow(){
+        List<Integer> inputsList = List.of(2,4,6,0,8);
+        List<Integer> transformedList = inputsList
+                .map(CheckedFunction1.lift(integer -> 4/integer))
+                .map(integer -> integer.getOrElse(-1));
+        assertThat(transformedList.size()).isEqualTo(inputsList.size());
+        assertThat(transformedList.filter(integer -> integer<0)).isNotEmpty();
+
+    }
 }
