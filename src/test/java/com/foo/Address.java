@@ -13,6 +13,14 @@ public class Address {
     private String town;
     private String country;
 
+    public Address() {
+    }
+
+    public Address( String town, String country) {
+        this.town = town;
+        this.country = country;
+    }
+
     public String getEmailAddress() {
         return emailAddress;
     }
